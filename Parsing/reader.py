@@ -34,6 +34,15 @@ conversations = {}
 # ###[ Raw ]###
 #            load      = b'{"host_int": 20473467, "version": [1, 8], "displayname": "Trevor-PC", "port": 17500, "namespaces": [13068657, 13069042]}'
 
+def makeConvo(insertdict,convoCount):
+    conversations[convoCount] = {}
+    conversations[convoCount]["index"] = 0
+    conversations[convoCount]["state"] = "idle"
+    conversations[convoCount]["info"] = []
+    conversations[convoCount]["info"].append(insertdict)
+    convoCount +=1
+
+
 
 
 for packet in file:
@@ -42,30 +51,28 @@ for packet in file:
         # making the object that will be inserted
         insertdict = {}
         insertdict["time"] = packet.time
-        insertdict['srcip'] = packet["IP"].src
-        insertdict['dstip'] = packet["IP"].dst
+        insertdict['src_ip'] = packet["IP"].src
+        insertdict['dst_ip'] = packet["IP"].dst
+        
         if packet.haslayer("TCP"):
             insertdict["type"]  = "TCP"
         else:
             insertdict["type"]  = "UDP"
+        
         # sorting the packet
         if len(conversations) != 0:
             match = False
             for val in conversations.values():
                 #checking if a similar packet exists
-                if ((val[0]['srcip'] == insertdict['srcip'] and val[0]['dstip'] == insertdict['dstip']) or (val[0]['srcip'] == insertdict['dstip'] and val[0]['dstip'] == insertdict['srcip'])) and val[0]['type'] == insertdict["type"]:
-                    val.append(insertdict)
+                if ((val["info"][0]['src_ip'] == insertdict['src_ip'] and val["info"][0]['dst_ip'] == insertdict['dst_ip']) or (val["info"][0]['src_ip'] == insertdict['dst_ip'] and val["info"][0]['dst_ip'] == insertdict['src_ip'])) and val["info"][0]['type'] == insertdict["type"]:
+                    val["info"].append(insertdict)
                     match = True
                     break
             
             if not match:
-                conversations[convoCount] = []
-                conversations[convoCount].append(insertdict)
-                convoCount += 1
+                makeConvo(insertdict, convoCount)
         else:
-            conversations[convoCount] = []
-            conversations[convoCount].append(insertdict)
-            convoCount += 1
+            makeConvo(insertdict, convoCount)
     
 for cnv in conversations.values():
     print(cnv[0])
